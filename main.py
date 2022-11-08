@@ -6,11 +6,13 @@ import pandas as pd
 import requests
 
 API_KEY = ''
-QUESTION_STRING = 'АЗС'
+QUESTION_STRING = 'Торговый центр'
 
 
 class city_shape:
     def __init__(self, name, point1=(), point2=()):
+
+        # Min size of searching area
         self.MIN_X = 0.09
         self.MIN_Y = 0.07
 
@@ -24,6 +26,7 @@ class city_shape:
         MIN_X = self.MIN_X
         MIN_Y = self.MIN_Y
 
+        # Slicing city's area by search rectangles
         shapes = [[(), ()]]
         for j in range(math.floor(self.y_length / MIN_Y) + 1):
             for i in range(math.floor(self.x_length / MIN_X) + 1):
@@ -47,6 +50,12 @@ def load_cities():
 
 
 def get_json_by_city_name_page(city_name, page):
+    """
+    Get result based on only question string
+    :param city_name:
+    :param page:
+    :return:
+    """
     print(f'    request: {city_name} page={page}')
     url = f"https://catalog.api.2gis.com/3.0/items?q={QUESTION_STRING} '{city_name}'&key={API_KEY}&locale=ru_RU&page={page}&fields=items.full_address_name,items.rubrics,items.capacity,items.floors,items.links,items.itin,items.floors,items.is_paid,items.point".replace(
         " ", "%20")
@@ -56,8 +65,14 @@ def get_json_by_city_name_page(city_name, page):
 
 
 def get_json_by_shape_page(shape, page):
+    """
+    Get result based on GPS and question string
+    :param shape:
+    :param page:
+    :return:
+    """
     print(f'    request: {shape}: page={page}')
-    url = f"https://catalog.api.2gis.com/3.0/items?q=Торговый центр&point1={shape[0][0]},{shape[0][1]}&point2={shape[1][0]},{shape[1][1]}&key={API_KEY}&locale=ru_RU&page={page}&fields=items.full_address_name,items.rubrics,items.capacity,items.floors,items.links,items.itin,items.floors,items.is_paid,items.point".replace(
+    url = f"https://catalog.api.2gis.com/3.0/items?q={QUESTION_STRING}&point1={shape[0][0]},{shape[0][1]}&point2={shape[1][0]},{shape[1][1]}&key={API_KEY}&locale=ru_RU&page={page}&fields=items.full_address_name,items.rubrics,items.capacity,items.floors,items.links,items.itin,items.floors,items.is_paid,items.point".replace(
         " ", "%20")
     response = requests.get(url)
     time.sleep(1)
@@ -66,6 +81,11 @@ def get_json_by_shape_page(shape, page):
 
 
 def parse_total(data_json):
+    """
+    Access to main result field
+    :param data_json:
+    :return:
+    """
     if data_json['meta']['code'] == 404:
         return 0
     total = data_json['result']['total']
@@ -73,6 +93,12 @@ def parse_total(data_json):
 
 
 def load_json_by_city_name_shape(city_name, shapes):
+    """
+    Main stream
+    :param city_name:
+    :param shapes:
+    :return:
+    """
     shape_num = 0
     for shape in shapes:
         shape_num += 1
@@ -97,6 +123,11 @@ def load_json_by_city_name_shape(city_name, shapes):
 
 
 def load_json_by_city_name(city_name):
+    """
+    Main stream (old version)
+    :param city_name:
+    :return:
+    """
     page = 1
     data_json = get_json_by_city_name_page(city_name, page)
     save_json(data_json, city_name + str(page))
@@ -124,14 +155,7 @@ def save_json(data, filename):
 def load_files():
     cities_df = load_cities()
     for city_name in cities_df['city_name'].unique():
-        # point1 = (cities_df.loc[cities_df['city_name'] == city_name]['point1_1'].values[0],
-        #           cities_df.loc[cities_df['city_name'] == city_name]['point1_2'].values[0])
-        # point2 = (cities_df.loc[cities_df['city_name'] == city_name]['point2_1'].values[0],
-        #           cities_df.loc[cities_df['city_name'] == city_name]['point2_2'].values[0])
-        # input_shape = city_shape(city_name, point1=point1, point2=point2).get_shapes()
-
         print(f'go {city_name}...')
-        # load_json_by_city_name_shape(city_name, input_shape)
         load_json_by_city_name(city_name)
         print(f'    data loaded')
 
@@ -139,10 +163,13 @@ def load_files():
 
 
 def load_json():
+    """
+    Compiling result DataFrame from multiple json files
+    :return:
+    """
     import glob, os, pathlib
     os.chdir(pathlib.Path.cwd())
     df = []
-    city_name = 'Санкт-Петербург'
     for file in glob.glob(f"*.json"):
         print(file)
 
@@ -164,5 +191,3 @@ def main():
 if __name__ == '__main__':
     # load_files()
     load_json()
-
-property
