@@ -44,7 +44,7 @@ class city_shape:
 
 
 def load_cities():
-    df = pd.read_excel('cities.xlsx', header=0, dtype={'id': float,
+    df = pd.read_excel('cities_old.xlsx', header=0, dtype={'id': float,
                                                        'city_name': str})
     return df
 
