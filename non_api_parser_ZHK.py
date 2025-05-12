@@ -66,7 +66,7 @@ def main():
             #df_out['city'] = city_name
             #df_out.to_excel(f'{city_name}_out.xlsx')
             #continue
-    df_out.to_excel('zhk_names_out.xlsx')
+    df_out.to_excel('zhk_names_out_new.xlsx')
     # items = browser.find_elements(By.CLASS_NAME, '_tluih8')  # adress
     # addr += [x.get_attribute("textContent").replace(u'\xa0', ' ') for x in items]
     # next_btn.click()
