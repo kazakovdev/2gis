@@ -9,6 +9,7 @@ from selenium.webdriver.support.ui import WebDriverWait
 from time import sleep
 from tqdm import tqdm
 import glob
+import re
 
 
 def main():
@@ -98,6 +99,83 @@ def main():
         sleep(5)
 
 
+def get_tc_info():
+    option = Options()
+    option.add_argument("--disable-infobars")
+
+    df = pd.read_excel('all_tc.xlsx')
+    browser = webdriver.Chrome()
+    browser.get('https://2gis.ru/')
+
+    for tc_add in tqdm(df['tc_addr'].unique()[::]):
+        pattern = r'\d+\s*филиал(?:а|ов)?'
+
+        # Удаление фразы
+        tc_add = re.sub(pattern, '', tc_add).strip()
+
+        print(f'Start tc: {tc_add}')
+        files = glob.glob(f'tc/{tc_add}*.xlsx')
+        if files:
+            print(f'City: {tc_add} already exists')
+            continue
+        # Или в поддиректории:
+        # files = glob.glob('папка/*.txt')
+        # Initialise chrome driver
+
+
+
+        while True:
+            try:
+                elem = browser.find_element(By.CLASS_NAME, '_cu5ae4')
+                break
+            except:
+                print(f'NO FIND ELEMENT(SHIT)')
+                browser.close()
+                browser = webdriver.Chrome()
+                browser.get('https://2gis.ru/')
+                sleep(10)
+
+        actions = ActionChains(browser)
+        elem.clear()
+        elem.send_keys(f'{tc_add}' + Keys.RETURN)
+        name = []
+
+        # Here we go
+        try:
+            cross_btn = WebDriverWait(browser, 10).until(EC.presence_of_element_located((By.CLASS_NAME, '_1x89xo5')))
+            cross_btn.click()
+        except:
+            #flow = browser.find_elements(By.CLASS_NAME, '_1kf6gff')
+            #flow[0].click()
+            continue
+
+        items = browser.find_elements(By.CLASS_NAME, '_1x89xo5')  # adress
+        name = items[0].text
+
+        items = browser.find_elements(By.CLASS_NAME, '_1idnaau')  # adress
+        tc_type = items[0].text
+
+        items = browser.find_elements(By.CLASS_NAME, '_14lj3n7')  # adress
+        org_cnt = items[0].text
+
+
+        print(1)
+
+
+
+        # addr += [x.get_attribute("textContent").replace('\n', ';').replace(u'\xa0', ' ') for x in items]
+
+
+        df_out = pd.DataFrame([[name, tc_type, org_cnt]], columns=['name', 'tc_type', 'org_cnt'])
+        #df_out['city'] = city_name
+        df_out.to_excel(f'tc/{tc_add}_out.xlsx')
+
+        #print(len(set(addr)))
+        #browser.close()
+        sleep(5)
+
+
+
 def load_json():
     import glob, os, pathlib
     os.chdir(pathlib.Path.cwd())
@@ -114,4 +192,4 @@ def load_json():
 
 
 if __name__ == '__main__':
-    load_json()
+    get_tc_info()
